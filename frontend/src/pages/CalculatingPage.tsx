@@ -53,8 +53,14 @@ export default function CalculatingPage() {
           // Navigate to result page with calculation ID
           navigate(`/result/${result.calculation_id}`, { state: { result } });
         }, 500);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Calculation error:', err);
+        console.error('Error details:', {
+          message: err?.message,
+          code: err?.code,
+          response: err?.response,
+          data: err?.data,
+        });
         setError('計算中にエラーが発生しました。もう一度お試しください。');
         setTimeout(() => navigate(ROUTES.QUESTIONS), 3000);
       } finally {
