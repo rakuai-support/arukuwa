@@ -55,7 +55,7 @@ class DevelopmentConfig(Config):
     """Development configuration"""
 
     DEBUG = True
-    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = False  # Disable SQLAlchemy query logging
     SESSION_COOKIE_SECURE = False  # Allow HTTP in development
 
 
