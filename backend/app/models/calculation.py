@@ -2,7 +2,6 @@
 Calculation Models
 """
 from datetime import datetime
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import String, DateTime, Integer, BigInteger, ForeignKey
 
 from app.extensions import db
@@ -25,15 +24,15 @@ class Calculation(db.Model):
         nullable=False
     )
     input_data = db.Column(
-        db.JSON if db.engine.name != 'postgresql' else JSONB,
+        db.JSON,
         nullable=False
     )
     result_data = db.Column(
-        db.JSON if db.engine.name != 'postgresql' else JSONB,
+        db.JSON,
         nullable=False
     )
     ai_analysis = db.Column(
-        db.JSON if db.engine.name != 'postgresql' else JSONB,
+        db.JSON,
         nullable=True
     )
     created_at = db.Column(
