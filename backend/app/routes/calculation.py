@@ -7,7 +7,7 @@ from datetime import datetime
 
 from app.extensions import db
 from app.models import Calculation, CalculationYearlyData, Session
-from app.services import LifePlanCalculator
+from app.services import LifePlanCalculator, get_gemini_service
 
 calculation_bp = Blueprint("calculation", __name__)
 
@@ -106,14 +106,28 @@ def calculate():
 
         result = calculator.calculate(simulation_years=simulation_years)
 
-        # AI分析（シンプル版、後でGemini APIと統合）
-        ai_analysis = {
-            "risk_factors": calculator.get_risk_factors(result),
-            "suggestions": calculator.get_suggestions(result),
-            "advice_message": calculator.generate_advice_message(result),
-            "generated_at": datetime.utcnow().isoformat() + "Z",
-            "model_version": "simple_calculator_v1",
-        }
+        # AI分析（Gemini API使用）
+        use_ai = options.get("use_ai_analysis", True)
+
+        if use_ai:
+            gemini_service = get_gemini_service()
+            ai_analysis_result = gemini_service.analyze_life_plan(user_info, result)
+            ai_analysis = {
+                "risk_factors": ai_analysis_result.get("risk_factors", []),
+                "suggestions": ai_analysis_result.get("suggestions", []),
+                "advice_message": ai_analysis_result.get("advice_message", ""),
+                "generated_at": datetime.utcnow().isoformat() + "Z",
+                "model_version": "gemini" if gemini_service.enabled else "fallback",
+            }
+        else:
+            # Fallback to simple analysis
+            ai_analysis = {
+                "risk_factors": calculator.get_risk_factors(result),
+                "suggestions": calculator.get_suggestions(result),
+                "advice_message": calculator.generate_advice_message(result),
+                "generated_at": datetime.utcnow().isoformat() + "Z",
+                "model_version": "simple_calculator_v1",
+            }
 
         # 計算結果をデータベースに保存
         calculation_id = f"calc_{uuid.uuid4().hex[:16]}"
