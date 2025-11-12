@@ -5,6 +5,8 @@ import { QuestionProvider } from '@/contexts/QuestionContext';
 // Pages
 import HomePage from '@/pages/HomePage';
 import QuestionsPage from '@/pages/QuestionsPage';
+import CalculatingPage from '@/pages/CalculatingPage';
+import ResultPage from '@/pages/ResultPage';
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
           <Routes>
             <Route path={ROUTES.HOME} element={<HomePage />} />
             <Route path={ROUTES.QUESTIONS} element={<QuestionsPage />} />
+            <Route path={ROUTES.CALCULATING} element={<CalculatingPage />} />
+            <Route path={ROUTES.RESULT} element={<ResultPage />} />
             {/* More routes will be added here */}
           </Routes>
         </div>
