@@ -61,6 +61,7 @@ def init_extensions(app):
             "methods": ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "expose_headers": ["X-RateLimit-Limit", "X-RateLimit-Remaining"],
+            "supports_credentials": True,
             "max_age": 3600
         }
     })
