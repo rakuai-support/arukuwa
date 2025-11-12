@@ -56,12 +56,17 @@ class GeminiService:
                 }
             )
 
+            # Log the raw response for debugging
+            current_app.logger.info(f"Gemini API raw response: {response.text}")
+
             # Parse response
             analysis = self._parse_response(response.text)
             return analysis
 
         except Exception as e:
             current_app.logger.error(f"Gemini API error: {str(e)}")
+            import traceback
+            current_app.logger.error(f"Traceback: {traceback.format_exc()}")
             return self._fallback_analysis(user_info, calculation_result)
 
     def _build_prompt(self, user_info: Dict, calculation_result: Dict) -> str:
@@ -140,6 +145,13 @@ class GeminiService:
 
     def _parse_response(self, response_text: str) -> Dict:
         """Parse Gemini API response"""
+        if not response_text:
+            return {
+                "risk_factors": [],
+                "suggestions": [],
+                "advice_message": self._generate_fallback_advice([], [])
+            }
+
         lines = response_text.strip().split('\n')
 
         risk_factors = []
@@ -151,8 +163,12 @@ class GeminiService:
         for line in lines:
             line = line.strip()
 
-            # Skip empty lines and headers
-            if not line or line.startswith('#'):
+            # Skip empty lines
+            if not line:
+                continue
+
+            # Detect section headers
+            if line.startswith('#') or '###' in line:
                 if 'リスク' in line:
                     current_section = 'risk'
                 elif '提案' in line or '改善' in line:
@@ -162,20 +178,27 @@ class GeminiService:
                 continue
 
             # Parse bullet points
-            if line.startswith('-') or line.startswith('•') or line.startswith('*'):
-                content = line[1:].strip()
-                if current_section == 'risk':
-                    risk_factors.append(content)
-                elif current_section == 'suggestion':
-                    suggestions.append(content)
+            if line.startswith('-') or line.startswith('•') or line.startswith('*') or line.startswith('- '):
+                # Remove bullet point marker
+                content = line.lstrip('-•* ').strip()
+                if content:
+                    if current_section == 'risk':
+                        risk_factors.append(content)
+                    elif current_section == 'suggestion':
+                        suggestions.append(content)
             else:
                 # Regular text for advice message
-                if current_section == 'advice':
+                if current_section == 'advice' and line:
                     advice_message.append(line)
 
+        # If no structured data was found, try to extract something useful
+        if not risk_factors and not suggestions and not advice_message:
+            current_app.logger.warning("Failed to parse structured response, using raw text")
+            advice_message = [response_text[:500]]  # Use first 500 chars as advice
+
         return {
-            "risk_factors": risk_factors[:5],  # Limit to 5
-            "suggestions": suggestions[:5],    # Limit to 5
+            "risk_factors": risk_factors[:5] if risk_factors else [],
+            "suggestions": suggestions[:5] if suggestions else [],
             "advice_message": '\n'.join(advice_message) if advice_message else self._generate_fallback_advice(risk_factors, suggestions)
         }
 
