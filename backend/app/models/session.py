@@ -3,7 +3,6 @@ Session Model
 """
 import uuid
 from datetime import datetime, timedelta
-from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy import String, DateTime, Integer
 
 from app.extensions import db
@@ -38,7 +37,7 @@ class Session(db.Model):
         default=lambda: datetime.utcnow() + timedelta(days=1)
     )
     client_info = db.Column(
-        db.JSON if db.engine.name != 'postgresql' else JSONB,
+        db.JSON,
         nullable=True
     )
 
