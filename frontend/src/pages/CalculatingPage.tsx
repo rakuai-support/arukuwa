@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuestion } from '@/contexts/QuestionContext';
 import { calculationService } from '@/services/calculationService';
 import { APP_NAME, ROUTES } from '@/constants';
+import type { CalculationInput } from '@/types';
 
 export default function CalculatingPage() {
   const navigate = useNavigate();
@@ -32,12 +33,14 @@ export default function CalculatingPage() {
           return;
         }
 
-        const input = {
-          age: answers.age,
-          monthly_expenses: answers.monthly_expenses,
-          total_assets: answers.total_assets,
-          monthly_support: answers.monthly_support || 0,
-          support_type: answers.support_type || 'none',
+        const input: CalculationInput = {
+          user_info: {
+            age: answers.age!,
+            monthly_expenses: answers.monthly_expenses!,
+            total_assets: answers.total_assets!,
+            monthly_support: answers.monthly_support || 0,
+            support_type: answers.support_type || 'none',
+          },
         };
 
         const result = await calculationService.calculate(input);
