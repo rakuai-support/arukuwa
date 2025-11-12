@@ -100,28 +100,25 @@ class GeminiService:
             prompt += "- 資産は長期的に維持できる見込みです\n"
 
         prompt += """
-## アドバイスの形式
+## 重要：出力形式
 
-以下の形式で回答してください：
+**必ず以下のJSON形式で回答してください。他の形式は使用しないでください。**
 
-### リスク要因
-[箇条書きで3-5項目]
-- 具体的なリスク要因を挙げてください
-- 責めるような表現は避け、客観的に記述してください
-
-### 改善のための提案
-[箇条書きで3-5項目]
-- 実践しやすい具体的な提案をしてください
-- 小さな一歩から始められる内容を含めてください
-- 心理的ハードルが低いものを優先してください
-
-### アドバイスメッセージ
-[200-300文字程度の文章]
-- 温かく、励ますトーンで書いてください
-- 批判や否定的な表現は避けてください
-- 「できること」に焦点を当ててください
-- 具体的な行動を1-2つ提案してください
-- 孤独感を和らげるような表現を含めてください
+```json
+{
+  "risk_factors": [
+    "リスク要因1",
+    "リスク要因2",
+    "リスク要因3"
+  ],
+  "suggestions": [
+    "提案1",
+    "提案2",
+    "提案3"
+  ],
+  "advice_message": "温かく励ますトーンのアドバイスメッセージ（200-300文字）"
+}
+```
 
 ## 重要な注意事項
 1. ひきこもりの方の心理的負担に配慮してください
@@ -129,6 +126,7 @@ class GeminiService:
 3. 小さな成功体験を積み重ねることの重要性を伝えてください
 4. 利用可能な社会資源（障害年金、生活保護、支援団体など）の情報も含めてください
 5. 前向きで希望を持てるメッセージにしてください
+6. **必ずJSON形式で回答してください。マークダウンや他の形式は使用しないでください。**
 """
 
         return prompt
@@ -144,7 +142,10 @@ class GeminiService:
         return labels.get(support_type, "なし")
 
     def _parse_response(self, response_text: str) -> Dict:
-        """Parse Gemini API response"""
+        """Parse Gemini API response (expects JSON format)"""
+        import json
+        import re
+
         if not response_text:
             return {
                 "risk_factors": [],
@@ -152,55 +153,44 @@ class GeminiService:
                 "advice_message": self._generate_fallback_advice([], [])
             }
 
-        lines = response_text.strip().split('\n')
-
-        risk_factors = []
-        suggestions = []
-        advice_message = []
-
-        current_section = None
-
-        for line in lines:
-            line = line.strip()
-
-            # Skip empty lines
-            if not line:
-                continue
-
-            # Detect section headers
-            if line.startswith('#') or '###' in line:
-                if 'リスク' in line:
-                    current_section = 'risk'
-                elif '提案' in line or '改善' in line:
-                    current_section = 'suggestion'
-                elif 'アドバイス' in line or 'メッセージ' in line:
-                    current_section = 'advice'
-                continue
-
-            # Parse bullet points
-            if line.startswith('-') or line.startswith('•') or line.startswith('*') or line.startswith('- '):
-                # Remove bullet point marker
-                content = line.lstrip('-•* ').strip()
-                if content:
-                    if current_section == 'risk':
-                        risk_factors.append(content)
-                    elif current_section == 'suggestion':
-                        suggestions.append(content)
+        # Try to extract JSON from response
+        # Sometimes Gemini wraps JSON in markdown code blocks
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+        if json_match:
+            json_text = json_match.group(1)
+        else:
+            # Try to find JSON directly
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                json_text = json_match.group(0)
             else:
-                # Regular text for advice message
-                if current_section == 'advice' and line:
-                    advice_message.append(line)
+                # No JSON found, use fallback
+                current_app.logger.warning("No JSON found in response, using fallback")
+                return {
+                    "risk_factors": [],
+                    "suggestions": [],
+                    "advice_message": response_text[:500] if len(response_text) > 500 else response_text
+                }
 
-        # If no structured data was found, try to extract something useful
-        if not risk_factors and not suggestions and not advice_message:
-            current_app.logger.warning("Failed to parse structured response, using raw text")
-            advice_message = [response_text[:500]]  # Use first 500 chars as advice
+        try:
+            data = json.loads(json_text)
 
-        return {
-            "risk_factors": risk_factors[:5] if risk_factors else [],
-            "suggestions": suggestions[:5] if suggestions else [],
-            "advice_message": '\n'.join(advice_message) if advice_message else self._generate_fallback_advice(risk_factors, suggestions)
-        }
+            return {
+                "risk_factors": data.get("risk_factors", [])[:5],
+                "suggestions": data.get("suggestions", [])[:5],
+                "advice_message": data.get("advice_message", self._generate_fallback_advice(
+                    data.get("risk_factors", []),
+                    data.get("suggestions", [])
+                ))
+            }
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"Failed to parse JSON response: {str(e)}")
+            current_app.logger.error(f"JSON text: {json_text[:200]}")
+            return {
+                "risk_factors": [],
+                "suggestions": [],
+                "advice_message": response_text[:500] if len(response_text) > 500 else response_text
+            }
 
     def _fallback_analysis(self, user_info: Dict, calculation_result: Dict) -> Dict:
         """Fallback analysis when Gemini API is not available"""
