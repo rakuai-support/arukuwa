@@ -102,11 +102,11 @@ export default function ResultPage() {
 
   // Prepare chart data
   const chartData = {
-    labels: result.yearly_data.map((d) => `${d.age}歳`),
+    labels: result.result.yearly_data.map((d) => `${d.age}歳`),
     datasets: [
       {
         label: '資産残高',
-        data: result.yearly_data.map((d) => d.balance),
+        data: result.result.yearly_data.map((d) => d.balance),
         borderColor: CHART_COLORS.PRIMARY,
         backgroundColor: CHART_COLORS.PRIMARY_LIGHT,
         fill: true,
@@ -154,8 +154,7 @@ export default function ResultPage() {
     },
   };
 
-  const isAtRisk = result.depletion_age !== null && result.depletion_age < 100;
-  const riskLevel = result.risk_level || 'medium';
+  const isAtRisk = result.result.depletion_age !== null && result.result.depletion_age !== undefined && result.result.depletion_age < 100;
 
   return (
     <div className="min-h-screen bg-neutral-50 py-8 px-4">
@@ -186,10 +185,10 @@ export default function ResultPage() {
                 </div>
                 <div>
                   <p className="text-lg font-medium text-neutral-800">
-                    資産が<span className="text-red-600 font-bold">{result.depletion_age}歳</span>で枯渇する可能性があります
+                    資産が<span className="text-red-600 font-bold">{result.result.depletion_age}歳</span>で枯渇する可能性があります
                   </p>
                   <p className="text-sm text-neutral-600 mt-1">
-                    現在の生活を続けた場合、約{result.depletion_age - (result.yearly_data[0]?.age || 0)}年後に資産が尽きる計算です
+                    現在の生活を続けた場合、約{result.result.depletion_age! - (result.result.yearly_data[0]?.age || 0)}年後に資産が尽きる計算です
                   </p>
                 </div>
               </div>
@@ -229,21 +228,21 @@ export default function ResultPage() {
         </div>
 
         {/* AI Analysis */}
-        {result.ai_analysis && (
+        {result.result.ai_analysis && (
           <div className="card mb-6">
             <h3 className="text-lg font-bold text-neutral-800 mb-4">
               AIからのアドバイス
             </h3>
             <div className="prose prose-sm max-w-none">
               <p className="text-neutral-700 whitespace-pre-line">
-                {result.ai_analysis}
+                {result.result.ai_analysis.advice_message}
               </p>
             </div>
           </div>
         )}
 
         {/* Risk Factors */}
-        {result.risk_factors && result.risk_factors.length > 0 && (
+        {result.result.ai_analysis?.risk_factors && result.result.ai_analysis.risk_factors.length > 0 && (
           <div className="card mb-6">
             <h3 className="text-lg font-bold text-neutral-800 mb-4 flex items-center">
               <svg className="w-5 h-5 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
@@ -252,7 +251,7 @@ export default function ResultPage() {
               注意すべきポイント
             </h3>
             <ul className="space-y-2">
-              {result.risk_factors.map((risk, index) => (
+              {result.result.ai_analysis.risk_factors.map((risk, index) => (
                 <li key={index} className="flex items-start space-x-2">
                   <span className="text-yellow-500 mt-1">•</span>
                   <span className="text-neutral-700">{risk}</span>
@@ -263,7 +262,7 @@ export default function ResultPage() {
         )}
 
         {/* Suggestions */}
-        {result.suggestions && result.suggestions.length > 0 && (
+        {result.result.ai_analysis?.suggestions && result.result.ai_analysis.suggestions.length > 0 && (
           <div className="card mb-6">
             <h3 className="text-lg font-bold text-neutral-800 mb-4 flex items-center">
               <svg className="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
@@ -273,7 +272,7 @@ export default function ResultPage() {
               改善のための提案
             </h3>
             <ul className="space-y-2">
-              {result.suggestions.map((suggestion, index) => (
+              {result.result.ai_analysis.suggestions.map((suggestion, index) => (
                 <li key={index} className="flex items-start space-x-2">
                   <span className="text-blue-500 mt-1">✓</span>
                   <span className="text-neutral-700">{suggestion}</span>
