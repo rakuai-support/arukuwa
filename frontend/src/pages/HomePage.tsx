@@ -1,6 +1,13 @@
-import { APP_NAME } from '@/constants';
+import { useNavigate } from 'react-router-dom';
+import { APP_NAME, ROUTES } from '@/constants';
 
 export default function HomePage() {
+  const navigate = useNavigate();
+
+  const handleStart = () => {
+    navigate(ROUTES.QUESTIONS);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-2xl w-full text-center">
@@ -37,7 +44,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        <button className="btn btn-primary text-lg px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+        <button
+          onClick={handleStart}
+          className="btn btn-primary text-lg px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+        >
           はじめる →
         </button>
 
