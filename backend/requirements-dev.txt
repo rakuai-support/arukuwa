@@ -1,0 +1,41 @@
+# 開発環境用の依存関係（Windows対応）
+# psycopg2とredisは本番環境でのみ必要なため除外
+
+# Flask and Extensions
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-Session==0.5.0
+Flask-Limiter==3.5.0
+Flask-Talisman==1.1.0
+flask-marshmallow==0.15.0
+
+# Database
+SQLAlchemy==2.0.23
+Alembic==1.13.0
+# psycopg2-binary==2.9.9  # PostgreSQL用（本番環境のみ）
+
+# Validation and Serialization
+marshmallow==3.20.1
+marshmallow-sqlalchemy==0.29.0
+
+# Environment and Configuration
+python-dotenv==1.0.0
+
+# AI/ML
+google-generativeai==0.3.1
+
+# Caching and Rate Limiting
+# redis==5.0.1  # 本番環境のみ
+
+# Testing
+pytest==7.4.3
+pytest-flask==1.3.0
+pytest-cov==4.1.0
+
+# Code Quality
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+
+# Utilities
+python-dateutil==2.8.2
